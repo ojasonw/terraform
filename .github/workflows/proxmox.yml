@@ -105,12 +105,19 @@ jobs:
       - name: Authenticate to Cloudflare Access
         run: |
           mkdir -p ~/.cloudflared
-          TOKEN=$(curl -sf -D - -o /dev/null \
+          echo "--- HTTP response ---"
+          curl -v -o /dev/null \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            https://ssh.artjason.com 2>&1 | grep -iE '(< HTTP|< set-cookie|CF_Authorization|< location)' || true
+          echo "--- Extracting token ---"
+          TOKEN=$(curl -s -D - -o /dev/null \
             -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
             -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
             https://ssh.artjason.com \
-            | grep CF_Authorization | sed 's/.*CF_Authorization=//;s/;.*//')
+            | tr -d '\r' | grep CF_Authorization | sed 's/.*CF_Authorization=//;s/;.*//')
           echo "$TOKEN" > ~/.cloudflared/ssh.artjason.com-3a69fe55d04ab65bb03b9524389df86237e9cf1677e71fbb84926f3a64093d42-token
+          echo "Token length: ${#TOKEN}"
           echo "Token obtained: $([ -n "$TOKEN" ] && echo YES || echo NO)"
 
       - name: Configure SSH for ProxyJump via Cloudflare Tunnel
