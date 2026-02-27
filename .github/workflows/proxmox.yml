@@ -156,7 +156,7 @@ jobs:
         run: |
           ssh -f -N -L 2222:localhost:22 root@192.168.15.199
           sleep 1
-          ssh -o ConnectTimeout=5 -p 2222 root@127.0.0.1 "echo 'SSH tunnel OK'"
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p 2222 root@127.0.0.1 "echo 'SSH tunnel OK'"
 
       - name: Terraform init
         run: terraform init -input=false
