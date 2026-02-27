@@ -124,6 +124,9 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ACTION_SSH_PRIVATE_KEY }}
 
+      - name: Test SSH via ProxyJump
+        run: ssh -o ConnectTimeout=10 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
+
       - name: Terraform init
         run: terraform init -input=false
 
