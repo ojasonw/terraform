@@ -85,6 +85,8 @@ jobs:
     env:
       CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
       CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
 
     concurrency:
       group: proxmox-apply
@@ -149,17 +151,8 @@ jobs:
 
       - name: Test SSH via ProxyJump
         run: |
-          echo "=== Token files ==="
-          ls -la ~/.cloudflared/
-          echo "=== Test websocket endpoint ==="
-          curl -sv -o /dev/null \
-            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
-            https://ssh.artjason.com/cdn-cgi/access/ssh-session 2>&1 | head -30 || true
-          echo "=== cloudflared debug ==="
-          timeout 5 cloudflared --loglevel debug access ssh --hostname ssh.artjason.com 2>&1 || true
-          echo "=== SSH attempt ==="
-          ssh -vvv -o ConnectTimeout=15 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
+          echo "TUNNEL_SERVICE_TOKEN_ID set: $([ -n \"$TUNNEL_SERVICE_TOKEN_ID\" ] && echo YES || echo NO)"
+          ssh -o ConnectTimeout=15 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
 
       - name: Terraform init
         run: terraform init -input=false
