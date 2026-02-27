@@ -22,11 +22,6 @@ variable "proxmox_ssh_host" {
   default     = "192.168.15.199"
 }
 
-variable "proxmox_ssh_port" {
-  description = "Porta SSH do Proxmox (ou tunnel local)"
-  type        = number
-  default     = 22
-}
 
 variable "proxmox_datastore" {
   description = "Datastore padrao para VMs"
