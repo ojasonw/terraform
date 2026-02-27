@@ -105,11 +105,11 @@ jobs:
       - name: Authenticate to Cloudflare Access
         run: |
           mkdir -p ~/.cloudflared
-          TOKEN=$(curl -sf \
+          TOKEN=$(curl -sf -D - -o /dev/null \
             -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
             -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
             https://ssh.artjason.com \
-            -c - | grep CF_Authorization | awk '{print $NF}')
+            | grep CF_Authorization | sed 's/.*CF_Authorization=//;s/;.*//')
           echo "$TOKEN" > ~/.cloudflared/ssh.artjason.com-3a69fe55d04ab65bb03b9524389df86237e9cf1677e71fbb84926f3a64093d42-token
           echo "Token obtained: $([ -n "$TOKEN" ] && echo YES || echo NO)"
 
