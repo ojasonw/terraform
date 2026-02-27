@@ -19,7 +19,7 @@ variable "proxmox_node" {
 variable "proxmox_ssh_host" {
   description = "IP/hostname do Proxmox para SSH"
   type        = string
-  default     = "100.64.5.199"
+  default     = "192.168.15.199"
 }
 
 variable "proxmox_datastore" {
