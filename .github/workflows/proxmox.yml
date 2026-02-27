@@ -149,15 +149,15 @@ jobs:
 
       - name: Test SSH via ProxyJump
         run: |
-          echo "=== cloudflared version ==="
-          cloudflared version
           echo "=== Token files ==="
           ls -la ~/.cloudflared/
-          echo "=== Testing direct cloudflared connection ==="
-          cloudflared access ssh --hostname ssh.artjason.com 2>&1 &
-          CF_PID=$!
-          sleep 3
-          kill $CF_PID 2>/dev/null || true
+          echo "=== Test websocket endpoint ==="
+          curl -sv -o /dev/null \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            https://ssh.artjason.com/cdn-cgi/access/ssh-session 2>&1 | head -30 || true
+          echo "=== cloudflared debug ==="
+          timeout 5 cloudflared --loglevel debug access ssh --hostname ssh.artjason.com 2>&1 || true
           echo "=== SSH attempt ==="
           ssh -vvv -o ConnectTimeout=15 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
 
