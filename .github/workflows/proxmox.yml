@@ -105,24 +105,17 @@ jobs:
       - name: Authenticate to Cloudflare Access
         run: |
           mkdir -p ~/.cloudflared
-          echo "Client ID length: ${#CF_ACCESS_CLIENT_ID}"
-          echo "Client ID starts with: ${CF_ACCESS_CLIENT_ID:0:4}..."
-          echo "Client ID ends with: ...${CF_ACCESS_CLIENT_ID: -7}"
-          echo "Secret length: ${#CF_ACCESS_CLIENT_SECRET}"
-          echo "--- HTTP response ---"
-          curl -v -o /dev/null \
-            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
-            https://ssh.artjason.com 2>&1 | grep -iE '(< HTTP|< set-cookie|CF_Authorization|< location)' || true
-          echo "--- Extracting token ---"
           TOKEN=$(curl -s -D - -o /dev/null \
             -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
             -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
             https://ssh.artjason.com \
             | tr -d '\r' | grep CF_Authorization | sed 's/.*CF_Authorization=//;s/;.*//')
-          echo "$TOKEN" > ~/.cloudflared/ssh.artjason.com-3a69fe55d04ab65bb03b9524389df86237e9cf1677e71fbb84926f3a64093d42-token
-          echo "Token length: ${#TOKEN}"
           echo "Token obtained: $([ -n "$TOKEN" ] && echo YES || echo NO)"
+          if [ -z "$TOKEN" ]; then echo "ERROR: Failed to obtain CF Access token"; exit 1; fi
+          # cloudflared computes token path as MD5 of the URL
+          TOKEN_HASH=$(echo -n "https://ssh.artjason.com" | md5sum | cut -d' ' -f1)
+          echo "$TOKEN" > "$HOME/.cloudflared/${TOKEN_HASH}-token"
+          echo "Token cached at: ${TOKEN_HASH}-token"
 
       - name: Configure SSH for ProxyJump via Cloudflare Tunnel
         run: |
