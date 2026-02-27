@@ -127,6 +127,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ACTION_SSH_PRIVATE_KEY }}
 
+      - name: Debug cloudflared auth
+        run: |
+          echo "CF_ACCESS_CLIENT_ID set: $([ -n "$CF_ACCESS_CLIENT_ID" ] && echo YES || echo NO)"
+          echo "CF_ACCESS_CLIENT_SECRET set: $([ -n "$CF_ACCESS_CLIENT_SECRET" ] && echo YES || echo NO)"
+          cloudflared access token --app-url https://ssh.artjason.com 2>&1 | head -5 || true
+
       - name: Test SSH via ProxyJump
         run: ssh -o ConnectTimeout=10 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
 
