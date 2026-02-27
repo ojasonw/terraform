@@ -105,6 +105,10 @@ jobs:
       - name: Authenticate to Cloudflare Access
         run: |
           mkdir -p ~/.cloudflared
+          echo "Client ID length: ${#CF_ACCESS_CLIENT_ID}"
+          echo "Client ID starts with: ${CF_ACCESS_CLIENT_ID:0:4}..."
+          echo "Client ID ends with: ...${CF_ACCESS_CLIENT_ID: -7}"
+          echo "Secret length: ${#CF_ACCESS_CLIENT_SECRET}"
           echo "--- HTTP response ---"
           curl -v -o /dev/null \
             -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
