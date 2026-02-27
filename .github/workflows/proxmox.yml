@@ -55,12 +55,6 @@ jobs:
         with:
           terraform_version: "1.9.5"
 
-      # - name: Configure AWS credentials (OIDC -> prod runner)
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: arn:aws:iam::713881824330:role/cicd-deployer-proxmox
-      #     aws-region: ${{ env.AWS_REGION }}
-
       - name: Terraform init
         run: terraform init -input=false
 
