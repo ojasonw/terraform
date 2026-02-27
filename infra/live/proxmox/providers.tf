@@ -23,6 +23,7 @@ provider "proxmox" {
     node {
       name    = var.proxmox_node
       address = var.proxmox_ssh_host
+      port    = var.proxmox_ssh_port
     }
   }
 }

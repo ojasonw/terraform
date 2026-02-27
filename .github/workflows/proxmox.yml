@@ -150,9 +150,13 @@ jobs:
           ssh-private-key: ${{ secrets.ACTION_SSH_PRIVATE_KEY }}
 
       - name: Test SSH via ProxyJump
+        run: ssh -o ConnectTimeout=15 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
+
+      - name: Start SSH tunnel to Proxmox
         run: |
-          echo "TUNNEL_SERVICE_TOKEN_ID set: $([ -n \"$TUNNEL_SERVICE_TOKEN_ID\" ] && echo YES || echo NO)"
-          ssh -o ConnectTimeout=15 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
+          ssh -f -N -L 2222:localhost:22 root@192.168.15.199
+          sleep 1
+          ssh -o ConnectTimeout=5 -p 2222 root@127.0.0.1 "echo 'SSH tunnel OK'"
 
       - name: Terraform init
         run: terraform init -input=false
@@ -167,5 +171,6 @@ jobs:
         env:
           TF_VAR_proxmox_api_url: "https://proxmox.artjason.com/"
           TF_VAR_proxmox_api_token: ${{ secrets.PROXMOX_API_TOKEN }}
-          TF_VAR_proxmox_ssh_host: "192.168.15.199"
+          TF_VAR_proxmox_ssh_host: "127.0.0.1"
+          TF_VAR_proxmox_ssh_port: "2222"
         run: terraform apply -auto-approve plan.out
