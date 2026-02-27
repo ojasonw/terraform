@@ -45,23 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Setup WireGuard
-      #   env:
-      #     WG0_CONF_B64: ${{ secrets.WG0_CONF_B64 }}
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y wireguard
-
-      #     sudo install -m 0700 -d /etc/wireguard
-      #     echo "$WG0_CONF_B64" | base64 -d >/dev/null 2>&1 || { echo "WG0_CONF_B64 inválido"; exit 1; }
-      #     echo "$WG0_CONF_B64" | base64 -d | sudo sh -c 'cat > /etc/wireguard/wg0.conf' >/dev/null 2>&1
-      #     sudo chmod 600 /etc/wireguard/wg0.conf
-
-      #     sudo wg-quick up wg0
-
-      #     echo "Testando conectividade com rede interna..."
-      #     ping -c 3 100.64.5.199 || echo "Ping falhou, mas pode funcionar via API"
-
       - name: Test Proxmox connectivity
         run: |
           curl -k -s -o /dev/null -w "Proxmox API: HTTP %{http_code}\n" \
@@ -115,20 +98,6 @@ jobs:
         working-directory: infra/live/proxmox
     steps:
       - uses: actions/checkout@v4
-
-      # - name: Setup WireGuard
-      #   env:
-      #     WG0_CONF_B64: ${{ secrets.WG0_CONF_B64 }}
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y wireguard
-
-      #     sudo install -m 0700 -d /etc/wireguard
-      #     echo "$WG0_CONF_B64" | base64 -d >/dev/null 2>&1 || { echo "WG0_CONF_B64 inválido"; exit 1; }
-      #     echo "$WG0_CONF_B64" | base64 -d | sudo sh -c 'cat > /etc/wireguard/wg0.conf' >/dev/null 2>&1
-      #     sudo chmod 600 /etc/wireguard/wg0.conf
-
-      #     sudo wg-quick up wg0
 
       - uses: hashicorp/setup-terraform@v3
         with:
