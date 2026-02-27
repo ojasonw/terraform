@@ -110,7 +110,7 @@ jobs:
             'Host ssh.artjason.com' \
             '  StrictHostKeyChecking no' \
             '  User jason' \
-            '  ProxyCommand cloudflared access ssh --hostname %h' \
+            "  ProxyCommand cloudflared access ssh --hostname %h --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
             '' \
             'Host 192.168.15.199' \
             '  StrictHostKeyChecking no' \
