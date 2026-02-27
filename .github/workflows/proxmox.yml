@@ -102,6 +102,17 @@ jobs:
           chmod +x /usr/local/bin/cloudflared
           cloudflared version
 
+      - name: Authenticate to Cloudflare Access
+        run: |
+          mkdir -p ~/.cloudflared
+          TOKEN=$(curl -sf \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            https://ssh.artjason.com \
+            -c - | grep CF_Authorization | awk '{print $NF}')
+          echo "$TOKEN" > ~/.cloudflared/ssh.artjason.com-3a69fe55d04ab65bb03b9524389df86237e9cf1677e71fbb84926f3a64093d42-token
+          echo "Token obtained: $([ -n "$TOKEN" ] && echo YES || echo NO)"
+
       - name: Configure SSH for ProxyJump via Cloudflare Tunnel
         run: |
           mkdir -p ~/.ssh
@@ -126,12 +137,6 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ACTION_SSH_PRIVATE_KEY }}
-
-      - name: Debug cloudflared auth
-        run: |
-          echo "CF_ACCESS_CLIENT_ID set: $([ -n "$CF_ACCESS_CLIENT_ID" ] && echo YES || echo NO)"
-          echo "CF_ACCESS_CLIENT_SECRET set: $([ -n "$CF_ACCESS_CLIENT_SECRET" ] && echo YES || echo NO)"
-          cloudflared access token https://ssh.artjason.com 2>&1 | head -5 || true
 
       - name: Test SSH via ProxyJump
         run: ssh -o ConnectTimeout=10 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
