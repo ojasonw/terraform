@@ -112,10 +112,15 @@ jobs:
             | tr -d '\r' | grep CF_Authorization | sed 's/.*CF_Authorization=//;s/;.*//')
           echo "Token obtained: $([ -n "$TOKEN" ] && echo YES || echo NO)"
           if [ -z "$TOKEN" ]; then echo "ERROR: Failed to obtain CF Access token"; exit 1; fi
-          # cloudflared computes token path as MD5 of the URL
-          TOKEN_HASH=$(echo -n "https://ssh.artjason.com" | md5sum | cut -d' ' -f1)
-          echo "$TOKEN" > "$HOME/.cloudflared/${TOKEN_HASH}-token"
-          echo "Token cached at: ${TOKEN_HASH}-token"
+          # Extract AUD from JWT payload (second segment, base64url-decoded)
+          AUD=$(echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('aud',''))" 2>/dev/null || true)
+          echo "AUD tag: ${AUD:0:16}..."
+          # Save token at all possible cloudflared cache paths
+          echo "$TOKEN" > "$HOME/.cloudflared/ssh.artjason.com-${AUD}-token"
+          TOKEN_MD5=$(echo -n "https://ssh.artjason.com" | md5sum | cut -d' ' -f1)
+          echo "$TOKEN" > "$HOME/.cloudflared/${TOKEN_MD5}-token"
+          echo "Cached at: ssh.artjason.com-<aud>-token and ${TOKEN_MD5}-token"
+          ls -la ~/.cloudflared/
 
       - name: Configure SSH for ProxyJump via Cloudflare Tunnel
         run: |
@@ -143,7 +148,18 @@ jobs:
           ssh-private-key: ${{ secrets.ACTION_SSH_PRIVATE_KEY }}
 
       - name: Test SSH via ProxyJump
-        run: ssh -o ConnectTimeout=10 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
+        run: |
+          echo "=== cloudflared version ==="
+          cloudflared version
+          echo "=== Token files ==="
+          ls -la ~/.cloudflared/
+          echo "=== Testing direct cloudflared connection ==="
+          cloudflared access ssh --hostname ssh.artjason.com 2>&1 &
+          CF_PID=$!
+          sleep 3
+          kill $CF_PID 2>/dev/null || true
+          echo "=== SSH attempt ==="
+          ssh -vvv -o ConnectTimeout=15 root@192.168.15.199 "echo 'SSH ProxyJump OK'"
 
       - name: Terraform init
         run: terraform init -input=false
