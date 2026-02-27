@@ -1,0 +1,37 @@
+# infra/live/home/terraform.tfvars.example
+# Copie para terraform.tfvars e preencha os valores
+
+# Proxmox
+proxmox_api_url   = "https://192.168.90.199:8006/"
+proxmox_api_token = "monitoring@pve!monitoring-token=SEU_TOKEN_AQUI"
+proxmox_node      = "proxmox"
+proxmox_ssh_host  = "192.168.90.199"
+proxmox_datastore = "local-lvm"
+proxmox_bridge    = "vmbr0"
+
+# VM Defaults
+default_username = "systemframe"
+default_password = "SENHA_SEGURA"
+cloud_image      = "local:iso/jammy-server-cloudimg-amd64.img"
+
+# VMs
+vms = {
+  vm1 = {
+    name         = "example-dev-pmx1"
+    vm_id        = 10101
+    cpu_cores    = 2
+    mem_mb       = 2048
+    disk_size_gb = 50
+  }
+  vm2 = {
+    name         = "example-dev-pmx2"
+    vm_id        = 10102
+    cpu_cores    = 4
+    mem_mb       = 4096
+    disk_size_gb = 50
+  }
+}
+
+# AWS/Route53
+domain_name       = "proxmox.artjason.com"
+proxmox_subdomain = "proxmox"
