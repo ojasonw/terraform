@@ -1,4 +1,4 @@
-# infra/live/home/providers.tf
+# infra/live/proxmox/providers.tf
 
 terraform {
   required_version = ">= 1.6.0"
@@ -6,12 +6,11 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.86.0"
+      version = ">= 0.84.0"
     }
   }
 }
 
-# Provider Proxmox para gerenciar VMs
 provider "proxmox" {
   endpoint  = var.proxmox_api_url
   api_token = var.proxmox_api_token
@@ -23,6 +22,10 @@ provider "proxmox" {
     node {
       name    = var.proxmox_node
       address = var.proxmox_ssh_host
+    }
+    node {
+      name    = var.proxmox_node_b
+      address = var.proxmox_ssh_host_b
     }
   }
 }

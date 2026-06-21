@@ -1,18 +1,6 @@
 # modules/proxmox-vm/main.tf
 # Modulo reutilizavel para criar VMs no Proxmox
 
-resource "proxmox_virtual_environment_file" "user_data_snippet" {
-  count = var.user_data_file != null ? 1 : 0
-
-  node_name    = var.node_name
-  content_type = "snippets"
-  datastore_id = var.iso_storage
-
-  source_file {
-    path = var.user_data_file
-  }
-}
-
 locals {
   vmid_offset = 10000
 
@@ -24,15 +12,43 @@ locals {
   resolved = {
     for k, vm in var.vms : k => var.images[vm.os]
   }
+
+  auth_templates = {
+    ssh_key  = coalesce(var.ssh_user_data_template, "${path.module}/templates/user-data-ssh.yaml.tpl")
+    password = coalesce(var.password_user_data_template, "${path.module}/templates/user-data-password.yaml.tpl")
+  }
+
+  cloud_image_vms = {
+    for k, vm in var.vms : k => vm
+    if local.resolved[k].type == "cloud-image"
+  }
 }
+
+resource "proxmox_virtual_environment_file" "user_data_snippet" {
+  for_each = local.cloud_image_vms
+
+  node_name    = coalesce(each.value.node, var.node_name)
+  content_type = "snippets"
+  datastore_id = var.iso_storage
+
+  source_raw {
+    data = templatefile(
+      local.auth_templates[coalesce(each.value.auth_mode, "ssh_key")],
+      { password_hash = each.value.vm_password_hash != null ? each.value.vm_password_hash : "" }
+    )
+    file_name = "user-data-${each.key}.yaml"
+  }
+}
+
 resource "proxmox_virtual_environment_vm" "vm" {
   for_each = var.vms
 
   vm_id     = local.systemframe_vmid_map[each.key]
   name      = each.value.name
-  node_name = var.node_name
+  node_name = coalesce(each.value.node, var.node_name)
 
   started = local.resolved[each.key].type == "cloud-image"
+
   dynamic "agent" {
     for_each = local.resolved[each.key].type == "iso" ? [1] : []
     content {
@@ -47,6 +63,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
       timeout = "10m"
     }
   }
+
   cpu {
     cores = try(each.value.cpu_cores, 2)
     type  = try(each.value.cpu_type, "x86-64-v2-AES")
@@ -55,6 +72,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   memory {
     dedicated = try(each.value.mem_mb, 2048)
   }
+
   dynamic "disk" {
     for_each = local.resolved[each.key].type == "cloud-image" ? [1] : []
     content {
@@ -72,7 +90,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
       size         = coalesce(each.value.disk_size_gb, 50)
       interface    = "sata0" # SATA for Windows native support (no VirtIO drivers needed)
       file_format  = "raw"
-      # sem file_id -> disco vazio
     }
   }
 
@@ -83,7 +100,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
       bridge = try(each.value.bridge, var.bridge)
     }
   }
-
   dynamic "network_device" {
     for_each = local.resolved[each.key].type == "cloud-image" ? [1] : []
     content {
@@ -96,7 +112,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     for_each = local.resolved[each.key].type == "cloud-image" ? [1] : []
     content {
       datastore_id      = try(each.value.datastore, var.datastore)
-      user_data_file_id = var.user_data_file != null ? proxmox_virtual_environment_file.user_data_snippet[0].id : null
+      user_data_file_id = proxmox_virtual_environment_file.user_data_snippet[each.key].id
 
       ip_config {
         ipv4 {
@@ -106,12 +122,14 @@ resource "proxmox_virtual_environment_vm" "vm" {
       }
     }
   }
+
   dynamic "cdrom" {
     for_each = local.resolved[each.key].type == "iso" ? [1] : []
     content {
       file_id = local.resolved[each.key].iso_id
     }
   }
+
   serial_device {
     device = "socket"
   }
@@ -121,7 +139,8 @@ resource "proxmox_virtual_environment_vm" "vm" {
   lifecycle {
     ignore_changes = [
       initialization,
-      started, # Ignore power state changes after creation (VMs may be started manually)
+      started,
+      cdrom,
     ]
   }
 }

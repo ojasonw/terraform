@@ -1,7 +1,7 @@
 # modules/proxmox-vm/variables.tf
 
 variable "node_name" {
-  description = "Nome do node Proxmox"
+  description = "Nome do node Proxmox primario (padrao)"
   type        = string
 }
 
@@ -23,13 +23,8 @@ variable "iso_storage" {
   default     = "local"
 }
 
-variable "cloud_image" {
-  description = "ID da imagem cloud padrao"
-  type        = string
-  default     = "local:iso/jammy-server-cloudimg-amd64.img"
-}
 variable "images" {
-  description = "Catálogo de imagens/ISOs disponíveis"
+  description = "Catalogo de imagens/ISOs disponiveis"
   type = map(object({
     type          = string           # "cloud-image" ou "iso"
     file_id       = optional(string) # cloud-image
@@ -37,22 +32,16 @@ variable "images" {
     virtio_iso_id = optional(string) # Windows
   }))
 }
-variable "user_data_file" {
-  description = "Caminho para arquivo cloud-init user-data (opcional)"
+
+variable "ssh_user_data_template" {
+  description = "Template cloud-init para auth via chave SSH (opcional, usa o padrao do modulo se nulo)"
   type        = string
   default     = null
 }
 
-variable "default_username" {
-  description = "Username padrao para VMs"
+variable "password_user_data_template" {
+  description = "Template cloud-init para auth via senha (opcional, usa o padrao do modulo se nulo)"
   type        = string
-  default     = "ubuntu"
-}
-
-variable "default_password" {
-  description = "Senha padrao para VMs"
-  type        = string
-  sensitive   = true
   default     = null
 }
 
@@ -65,20 +54,19 @@ variable "default_tags" {
 variable "vms" {
   description = "Mapa de VMs para criar"
   type = map(object({
-    name         = string
-    vm_id        = optional(number)
-    os           = string
-    cpu_cores    = optional(number, 2)
-    cpu_type     = optional(string, "x86-64-v2-AES")
-    mem_mb       = optional(number, 2048)
-    disk_size_gb = optional(number, 50)
-    bridge       = optional(string)
-    datastore    = optional(string)
-    file_id      = optional(string)
-    vm_username  = optional(string)
-    vm_password  = optional(string)
-    ipv4_address = optional(string, "dhcp")
-    ipv4_gateway = optional(string)
-    tags         = optional(list(string))
+    name             = string
+    os               = string
+    node             = optional(string)           # override para criar no node B
+    cpu_cores        = optional(number, 2)
+    cpu_type         = optional(string, "x86-64-v2-AES")
+    mem_mb           = optional(number, 2048)
+    disk_size_gb     = optional(number, 50)
+    bridge           = optional(string)
+    datastore        = optional(string)
+    ipv4_address     = optional(string, "dhcp")
+    ipv4_gateway     = optional(string)
+    tags             = optional(list(string))
+    auth_mode        = optional(string, "ssh_key") # "ssh_key" ou "password"
+    vm_password_hash = optional(string)            # hash SHA-512: openssl passwd -6 "senha"
   }))
 }

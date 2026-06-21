@@ -4,12 +4,11 @@ users:
     gecos: "Ubuntu User"
     groups: [adm, sudo]
     shell: /bin/bash
-    lock_passwd: true
+    lock_passwd: false
+    passwd: ${password_hash}
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    ssh_authorized_keys:
-    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKlEKs2k59Z0XU2F98mmLHNBrVCKyvtdtjb9BDA27uko
 
-ssh_pwauth: false
+ssh_pwauth: true
 disable_root: true
 
 package_update: true

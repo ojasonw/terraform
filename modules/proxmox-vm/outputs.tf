@@ -20,7 +20,7 @@ output "vm_ipv4_addresses" {
   value       = { for k, v in proxmox_virtual_environment_vm.vm : k => try(v.ipv4_addresses, []) }
 }
 
-output "snippet_id" {
-  description = "ID do snippet cloud-init"
-  value       = var.user_data_file != null ? proxmox_virtual_environment_file.user_data_snippet[0].id : null
+output "snippet_ids" {
+  description = "IDs dos snippets cloud-init por VM"
+  value       = { for k, v in proxmox_virtual_environment_file.user_data_snippet : k => v.id }
 }
