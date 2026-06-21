@@ -39,7 +39,8 @@ locals {
       name         = "monitoring"
       os           = "ubuntu_2404"
       auth_mode    = "ssh_key"
-      ipv4_address = "192.168.15.201"
+      ipv4_address = "192.168.15.201/24"
+      ipv4_gateway = "192.168.15.1"
       cpu_cores    = 2
       mem_mb       = 6144
       disk_size_gb = 60
@@ -49,17 +50,20 @@ locals {
       name         = "dev"
       os           = "ubuntu_2404"
       auth_mode    = "ssh_key"
-      ipv4_address = "192.168.15.202"
+      ipv4_address = "192.168.15.202/24"
+      ipv4_gateway = "192.168.15.1"
       cpu_cores    = 4
       mem_mb       = 8192
       disk_size_gb = 100
     }
+
     homolog = {
       name         = "homolog"
       os           = "ubuntu_2404"
       auth_mode    = "ssh_key"
       node         = "homelab-b"
-      ipv4_address = "192.168.15.203"
+      ipv4_address = "192.168.15.203/24"
+      ipv4_gateway = "192.168.15.1"
       cpu_cores    = 4
       mem_mb       = 8192
       disk_size_gb = 100
