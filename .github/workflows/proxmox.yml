@@ -92,6 +92,18 @@ jobs:
       - name: Terraform init
         run: terraform init -input=false
 
+      - name: Setup SSH key for Proxmox
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ACTION_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 192.168.15.199 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 192.168.15.198 >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
+
       - name: Download plan artifact
         uses: actions/download-artifact@v4
         with:
