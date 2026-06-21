@@ -85,6 +85,9 @@ module "proxmox_vms" {
   iso_storage  = var.proxmox_iso_storage
   default_tags = ["terraform", "managed", "proxmox"]
 
+  ssh_user_data_template      = "${path.module}/../../../modules/proxmox-vm/templates/user-data-ssh.yaml.tpl"
+  password_user_data_template = "${path.module}/../../../modules/proxmox-vm/templates/user-data-password.yaml.tpl"
+
   images = local.images
   vms    = local.vms
 }

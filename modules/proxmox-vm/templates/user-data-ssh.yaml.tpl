@@ -1,6 +1,6 @@
 #cloud-config
 users:
-  - name: systemframe
+  - name: ubuntu
     gecos: "Ubuntu User"
     groups: [adm, sudo]
     shell: /bin/bash
@@ -8,8 +8,6 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     ssh_authorized_keys:
     - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKlEKs2k59Z0XU2F98mmLHNBrVCKyvtdtjb9BDA27uko
-    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCC0quiXbO1n+9U1mniMrMOPh9bt3H26/5BaUbHbr+6
-    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCVQtAb9abo2PZPpkkk3MyPCXK7GjZj3ZyZO5HawQVT
 
 ssh_pwauth: false
 disable_root: true

@@ -1,6 +1,6 @@
 #cloud-config
 users:
-  - name: systemframe
+  - name: ubuntu
     gecos: "Ubuntu User"
     groups: [adm, sudo]
     shell: /bin/bash
