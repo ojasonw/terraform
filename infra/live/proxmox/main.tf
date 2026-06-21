@@ -58,12 +58,12 @@ locals {
       name         = "homolog"
       os           = "ubuntu_2404"
       auth_mode    = "ssh_key"
-      node         = "proxmox-homelab-b"
+      node         = "homelab-b"
       ipv4_address = "192.168.15.203"
       cpu_cores    = 4
       mem_mb       = 8192
       disk_size_gb = 100
-    }    
+    }
   }
 }
 
