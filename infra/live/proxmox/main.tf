@@ -44,12 +44,21 @@ locals {
       disk_size_gb = 10
     }
 
+    homelab-monitoring = {
+      name         = "homelab-monitoring"
+      os           = "ubuntu_2404"
+      auth_mode    = "ssh_key"
+      cpu_cores    = 2
+      mem_mb       = 6144
+      disk_size_gb = 60
+    }
+
     homelab-dev = {
       name         = "homelab-dev"
       os           = "ubuntu_2404"
       auth_mode    = "ssh_key"
       cpu_cores    = 4
-      mem_mb       = 6144
+      mem_mb       = 8192
       disk_size_gb = 100
     }
   }
