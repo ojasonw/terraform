@@ -1,18 +1,10 @@
 # infra/live/proxmox/main.tf
-# Configuracao principal do ambiente proxmox
 
 locals {
-  containers = {
-    ci-proxy = {
-      hostname         = "ci-proxy"
-      template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
-      cpu_cores        = 1
-      mem_mb           = 512
-      swap_mb          = 512
-      disk_size_gb     = 8
-      ipv4_address     = "192.168.15.200/24"
-      ipv4_gateway     = "192.168.15.1"
-      tags             = ["terraform", "managed", "ci", "proxy"]
+  lxc_templates = {
+    ubuntu_2404 = {
+      file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+      os_type = "ubuntu"
     }
   }
 
@@ -31,6 +23,19 @@ locals {
       type          = "iso"
       iso_id        = "local:iso/17763.3650.221105-1748.rs5_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
       virtio_iso_id = "local:iso/virtio-win.iso"
+    }
+  }
+
+  containers = {
+    ci-proxy = {
+      hostname     = "ci-proxy"
+      template     = "ubuntu_2404"
+      cpu_cores    = 1
+      mem_mb       = 512
+      disk_size_gb = 8
+      ipv4_address = "192.168.15.200/24"
+      ipv4_gateway = "192.168.15.1"
+      tags         = ["terraform", "managed", "ci", "proxy"]
     }
   }
 
@@ -77,10 +82,11 @@ locals {
 module "proxmox_lxc" {
   source = "../../../modules/proxmox-lxc"
 
-  node_name    = var.proxmox_node
-  datastore    = var.proxmox_datastore
-  bridge       = var.proxmox_bridge
-  default_tags = ["terraform", "managed", "proxmox"]
+  node_name     = var.proxmox_node
+  datastore     = var.proxmox_datastore
+  bridge        = var.proxmox_bridge
+  default_tags  = ["terraform", "managed", "proxmox"]
+  lxc_templates = local.lxc_templates
 
   ssh_public_keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKlEKs2k59Z0XU2F98mmLHNBrVCKyvtdtjb9BDA27uko",
@@ -90,7 +96,7 @@ module "proxmox_lxc" {
 }
 
 # ========================================
-# Proxmox VMs
+# VMs
 # ========================================
 module "proxmox_vms" {
   source = "../../../modules/proxmox-vm"
