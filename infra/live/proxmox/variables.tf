@@ -14,7 +14,7 @@ variable "proxmox_api_token" {
 variable "proxmox_node" {
   description = "Nome do node Proxmox A (primario)"
   type        = string
-  default     = "proxmox-a"
+  default     = "homelab-a"
 }
 
 variable "proxmox_ssh_host" {
@@ -26,7 +26,7 @@ variable "proxmox_ssh_host" {
 variable "proxmox_node_b" {
   description = "Nome do node Proxmox B"
   type        = string
-  default     = "proxmox-b"
+  default     = "homelab-b"
 }
 
 variable "proxmox_ssh_host_b" {
