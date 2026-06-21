@@ -67,6 +67,7 @@ module "proxmox_lxc" {
   default_tags = ["terraform", "managed", "proxmox"]
 
   ssh_public_keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKlEKs2k59Z0XU2F98mmLHNBrVCKyvtdtjb9BDA27uko",
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILmp4+eX/auAAKCP9if15Z3WPov8K5OzIqDbLdtDPOGn cicd_action_gh",
   ]
 
