@@ -9,6 +9,10 @@ terraform {
       version = ">= 0.84.0"
     }
   }
+
+  backend "local" {
+    path = "/opt/terraform/state/proxmox.tfstate"
+  }
 }
 
 provider "proxmox" {
