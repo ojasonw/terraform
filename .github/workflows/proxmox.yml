@@ -6,6 +6,7 @@ on:
     paths:
       - "infra/live/proxmox/**"
       - "modules/proxmox-vm/**"
+      - "modules/proxmox-lxc/**"
       - ".github/workflows/proxmox.yml"
 
   pull_request:
@@ -13,6 +14,7 @@ on:
     paths:
       - "infra/live/proxmox/**"
       - "modules/proxmox-vm/**"
+      - "modules/proxmox-lxc/**"
       - ".github/workflows/proxmox.yml"
 
   workflow_dispatch:
@@ -36,18 +38,12 @@ env:
 jobs:
   plan:
     name: Plan
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ci-proxy]
     defaults:
       run:
         working-directory: infra/live/proxmox
     steps:
       - uses: actions/checkout@v4
-
-      - name: Test Proxmox connectivity
-        run: |
-          curl -k -s -o /dev/null -w "Proxmox A API: HTTP %{http_code}\n" \
-            --connect-timeout 10 \
-            https://proxmox.artjason.com/api2/json/version
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -65,10 +61,8 @@ jobs:
 
       - name: Terraform plan
         env:
-          TF_VAR_proxmox_api_url: "https://proxmox.artjason.com/"
+          TF_VAR_proxmox_api_url: "https://192.168.15.199:8006/"
           TF_VAR_proxmox_api_token: ${{ secrets.PROXMOX_API_TOKEN }}
-          TF_VAR_proxmox_ssh_host: "192.168.15.199"
-          TF_VAR_proxmox_ssh_host_b: "192.168.15.198"
         run: terraform plan -out=plan.out
 
       - name: Upload plan
@@ -79,15 +73,9 @@ jobs:
 
   apply:
     name: Apply
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ci-proxy]
     needs: [plan]
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.apply == true)
-    env:
-      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-      TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-      TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-
     concurrency:
       group: proxmox-apply
       cancel-in-progress: false
@@ -97,73 +85,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cloudflared
-        run: |
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o /usr/local/bin/cloudflared
-          chmod +x /usr/local/bin/cloudflared
-          cloudflared version
-
-      - name: Authenticate to Cloudflare Access
-        run: |
-          mkdir -p ~/.cloudflared
-          TOKEN=$(curl -s -D - -o /dev/null \
-            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
-            https://ssh.artjason.com \
-            | tr -d '\r' | grep CF_Authorization | sed 's/.*CF_Authorization=//;s/;.*//')
-          echo "Token obtained: $([ -n "$TOKEN" ] && echo YES || echo NO)"
-          if [ -z "$TOKEN" ]; then echo "ERROR: Failed to obtain CF Access token"; exit 1; fi
-          AUD=$(echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('aud',''))" 2>/dev/null || true)
-          echo "AUD tag: ${AUD:0:16}..."
-          echo "$TOKEN" > "$HOME/.cloudflared/ssh.artjason.com-${AUD}-token"
-          TOKEN_MD5=$(echo -n "https://ssh.artjason.com" | md5sum | cut -d' ' -f1)
-          echo "$TOKEN" > "$HOME/.cloudflared/${TOKEN_MD5}-token"
-          ls -la ~/.cloudflared/
-
-      - name: Configure SSH for ProxyJump via Cloudflare Tunnel
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' \
-            'Host ssh.artjason.com' \
-            '  StrictHostKeyChecking no' \
-            '  User jason' \
-            '  ProxyCommand cloudflared access ssh --hostname %h' \
-            '' \
-            'Host 192.168.15.199' \
-            '  StrictHostKeyChecking no' \
-            '  User root' \
-            '  ProxyJump jason@ssh.artjason.com' \
-            '' \
-            'Host 192.168.15.198' \
-            '  StrictHostKeyChecking no' \
-            '  User root' \
-            '  ProxyJump jason@ssh.artjason.com' >> ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.9.5"
-
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.ACTION_SSH_PRIVATE_KEY }}
-
-      - name: Start SSH tunnels to Proxmox nodes
-        run: |
-          # Node A (192.168.15.199) -> localhost:2222
-          ssh -f -N -L 2222:localhost:22 root@192.168.15.199
-          # Node B (192.168.15.198) -> localhost:2223
-          ssh -f -N -L 2223:localhost:22 root@192.168.15.198
-          sleep 1
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p 2222 root@127.0.0.1 "echo 'SSH tunnel node A OK'"
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p 2223 root@127.0.0.1 "echo 'SSH tunnel node B OK'"
-          # Redirect Terraform provider SSH calls through the local tunnels
-          sudo sysctl -w net.ipv4.conf.all.route_localnet=1
-          sudo iptables -t nat -A OUTPUT -d 192.168.15.199 -p tcp --dport 22 -j DNAT --to-destination 127.0.0.1:2222
-          sudo iptables -t nat -A OUTPUT -d 192.168.15.198 -p tcp --dport 22 -j DNAT --to-destination 127.0.0.1:2223
 
       - name: Terraform init
         run: terraform init -input=false
@@ -176,7 +100,7 @@ jobs:
 
       - name: Terraform apply (from plan)
         env:
-          TF_VAR_proxmox_api_url: "https://proxmox.artjason.com/"
+          TF_VAR_proxmox_api_url: "https://192.168.15.199:8006/"
           TF_VAR_proxmox_api_token: ${{ secrets.PROXMOX_API_TOKEN }}
           TF_VAR_proxmox_ssh_host: "192.168.15.199"
           TF_VAR_proxmox_ssh_host_b: "192.168.15.198"
