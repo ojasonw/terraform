@@ -57,7 +57,7 @@ locals {
     homolog = {
       name         = "homolog"
       os           = "ubuntu_2404"
-      auth_mode    = "ssh_key
+      auth_mode    = "ssh_key"
       node         = "proxmox-homelab-b"
       ipv4_address = "192.168.15.203"
       cpu_cores    = 4
