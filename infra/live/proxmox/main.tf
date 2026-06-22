@@ -37,6 +37,17 @@ locals {
       ipv4_gateway = "192.168.15.1"
       tags         = ["terraform", "managed", "ci", "proxy"]
     }
+
+    pihole = {
+      hostname     = "pihole"
+      template     = "ubuntu_2404"
+      cpu_cores    = 1
+      mem_mb       = 512
+      disk_size_gb = 8
+      ipv4_address = "192.168.15.100/24"
+      ipv4_gateway = "192.168.15.1"
+      tags         = ["terraform", "managed", "dns", "pihole"]
+    }
   }
 
   vms = {
