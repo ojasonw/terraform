@@ -84,6 +84,17 @@ locals {
       mem_mb       = 8192
       disk_size_gb = 100
     }
+    zuno-app = {
+      name         = "zuno-app"
+      os           = "ubuntu_2404"
+      auth_mode    = "ssh_key"
+      node         = "homelab-a"
+      ipv4_address = "192.168.15.204/24"
+      ipv4_gateway = "192.168.15.1"
+      cpu_cores    = 4
+      mem_mb       = 4096
+      disk_size_gb = 100
+    }    
   }
 }
 
