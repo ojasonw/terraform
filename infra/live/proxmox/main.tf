@@ -94,7 +94,7 @@ locals {
       cpu_cores    = 4
       mem_mb       = 4096
       disk_size_gb = 100
-    }    
+    }
   }
 }
 

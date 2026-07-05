@@ -56,7 +56,7 @@ variable "vms" {
   type = map(object({
     name             = string
     os               = string
-    node             = optional(string)           # override para criar no node B
+    node             = optional(string) # override para criar no node B
     cpu_cores        = optional(number, 2)
     cpu_type         = optional(string, "x86-64-v2-AES")
     mem_mb           = optional(number, 2048)
