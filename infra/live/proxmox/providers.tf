@@ -6,7 +6,11 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = ">= 0.84.0"
+      # Pinned to a version confirmed working for VM disk import+resize.
+      # >= 0.84.0 with no committed lock file let CI silently drift to
+      # 0.111.1, which hits a known unfixed bug creating a new cloud-image
+      # VM's boot disk: https://github.com/bpg/terraform-provider-proxmox/issues/2060
+      version = "~> 0.86.0"
     }
   }
 
